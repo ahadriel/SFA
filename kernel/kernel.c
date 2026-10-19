@@ -69,5 +69,22 @@ void kernel_main(uint32_t magic,uint32_t mbi_addr){
  if((flags&(1u<<12))&&*(const uint32_t*)(const void*)(m+92)==0){uint64_t a=*(const uint64_t*)(const void*)(m+88);pitch=*(const uint32_t*)(const void*)(m+96);sw=*(const uint32_t*)(const void*)(m+100);sh=*(const uint32_t*)(const void*)(m+104);uint8_t bpp=m[108],type=m[109];
  if(a&&bpp==32&&type==1&&sw>=640&&sh>=480&&pitch>=sw*4){fb=(uint32_t*)(uintptr_t)(uint32_t)a;rp=m[110];gp=m[112];bp=m[114];if(rp<24&&gp<24&&bp<24)gfx=1;}}}
  draw();for(;;){char c=key();if(c==27){console_mode=0;len=0;line[0]=0;draw();continue;}if(!console_mode){if(c>='1'&&c<='4'){page=c-'1';draw();}else if(c=='h'||c=='H'){page=0;draw();}else if(c=='c'||c=='C'){console_mode=1;len=0;line[0]=0;draw();}else if(c=='r'||c=='R')reboot();continue;}
- if(c=='\t')continue;if(c=='\n'){line[len]=0;command();}else if(c=='\b'){if(len){line[--len]=0;draw();}}else if(c>=32&&c<=126&&len<sizeof(line)-1){line[len++]=c;line[len]=0;draw();}}
+ if(c=='\t') {
+  continue;
+ }
+ if(c=='\n') {
+  line[len]=0;
+  command();
+ } else if(c=='\b') {
+  if(len) {
+   line[--len]=0;
+   draw();
+  }
+ } else if(c>=32 && c<=126 && len<sizeof(line)-1) {
+  line[len++]=c;
+  line[len]=0;
+  draw();
+ }
+ }
+}
 }
