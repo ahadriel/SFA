@@ -2,59 +2,45 @@
 
 **Your machine. Your operating systems. Your choice.**
 
-Hybrid is a dynamically managed multi-OS boot environment. The machine boots into Hybrid first; from there, users can select a registered operating system or add/remove supported systems later without reinstalling the whole environment.
+Hybrid is being developed as its own operating system, starting with a freestanding kernel and a command-line interface. We are not using a Debian/Ubuntu live system as the OS foundation.
 
-> **Status: early prototype.** This repository is the start of the project, not yet a production-ready operating system or a bootable ISO.
+> **Status: early kernel prototype.** The first target is a bootable ISO that starts our own kernel and accepts keyboard commands. A graphical desktop comes after the CLI, memory management, and basic hardware foundations.
 
-## Vision
+## Development direction
 
-```text
-UEFI firmware
-    ↓
-Hybrid bootloader (GRUB-based prototype)
-    ↓
-Hybrid OS selector / recovery shell
-    ├── Boot a registered operating system
-    ├── Discover supported installations
-    ├── Register a new OS
-    └── Remove an OS registration safely
-```
+1. Boot a standalone kernel in VirtualBox.
+2. Build an interactive CLI with commands and a predictable shell.
+3. Add interrupts, memory management, timers, and a basic device layer.
+4. Add storage and a persistent OS-entry registry, with safe read-only discovery first.
+5. Implement supported boot handoff methods for registered operating systems.
+6. Build a graphical interface on top of the kernel after the core CLI is stable.
+7. Expand from the initial BIOS/Legacy prototype to UEFI deliberately.
 
-## Design goals
+## Build
 
-- **Dynamic registry:** operating systems can be registered after initial setup.
-- **Persistent control partition:** Hybrid configuration lives separately from guest OS installations.
-- **Safe-by-default management:** removing a registry entry must not erase an OS or partition.
-- **UEFI-first:** start with a reproducible VirtualBox UEFI target, then add other firmware modes deliberately.
-- **Honest boot support:** chainloading and direct ISO boot are different features. Not every ISO can be booted directly from disk; some require extraction, loopback support, or installation to a dedicated partition.
-- **Small steps:** build, test, and document each stage before attempting destructive disk operations.
+The GitHub Actions workflow builds hybrid-os-cli.iso using a freestanding 32-bit kernel build and GRUB. It does not run Debian Live Build or package a Linux userspace.
 
-## Initial development target
+After the workflow succeeds, open its run in the Actions tab and download the hybrid-os-cli-bios artifact.
 
-- VirtualBox VM with UEFI enabled
-- A dedicated 25 GiB virtual disk for Hybrid
-- Existing 500 GiB development disk kept separate
-- GRUB as the initial bootloader
-- A minimal Linux-based userspace for the management shell
+### Run in VirtualBox
 
-**Important:** do not run installer or partitioning commands against a real disk until its device identity has been verified. Device names such as `/dev/sda` and `/dev/sdb` can change between boots.
+- Create a new VM with type Linux/Other 32-bit (the kernel is currently a 32-bit Multiboot prototype).
+- Attach hybrid-os-cli.iso as the optical disk.
+- **Disable EFI** for this initial BIOS/Legacy milestone.
+- Start the VM. Type help at the hybrid> prompt.
 
-## Planned milestones
+## Current CLI commands
 
-1. [x] Establish project vision and safety rules.
-2. [ ] Create a reproducible build environment.
-3. [ ] Build a bootable UEFI prototype ISO.
-4. [ ] Display a Hybrid shell/menu after boot.
-5. [ ] Add a persistent OS registry on the dedicated Hybrid disk.
-6. [ ] Implement safe `list`, `add`, `remove`, and `boot` operations.
-7. [ ] Test booting a supported installed Linux system.
-8. [ ] Add OS detection, recovery tools, and more boot methods.
-9. [ ] Automate ISO builds with GitHub Actions.
+- help — show available commands
+- clear — clear the screen
+- about — identify the kernel prototype
+- status — show current subsystem status
+- os list — placeholder for the future OS registry
+- reboot — request a VM reboot
+- halt — halt the CPU
 
-## Current limitation
+## Scope and safety
 
-The first prototype will manage **boot entries**; it will not magically make every arbitrary `.iso`, `.exe`, or operating-system image bootable. Each operating system needs a supported boot method. Windows installation and direct booting of arbitrary ISOs will be treated as separate compatibility milestones.
+This is a genuine freestanding kernel prototype, not yet a full general-purpose OS. Memory management, a filesystem, USB, networking, OS discovery, and GUI support are not implemented yet. Registry and boot management will be added in stages. No installer, partitioner, or destructive disk operations are included in this first milestone.
 
-## Contributing / testing
-
-See [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/SAFETY.md](docs/SAFETY.md) before testing disk-related features.
+Booting an OS entry and registering its name are separate capabilities. Each OS will need a tested boot method; arbitrary ISO and Windows application compatibility cannot be assumed.
