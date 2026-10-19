@@ -1,37 +1,57 @@
-# Hybrid OS roadmap
+# Hybrid OS development roadmap
 
-Hybrid OS is an independent freestanding x86 kernel booted by GRUB Multiboot v1 in Legacy BIOS mode.
+Hybrid OS is a freestanding 32-bit x86 kernel booted through GRUB Multiboot v1 in Legacy BIOS mode. A successful compile is not treated as proof that hardware functionality works.
 
-## Phase 1 — graphical control center (current)
-- Request an 800x600x32 Multiboot framebuffer.
-- Draw the EONIS-inspired dark dashboard with a built-in bitmap font.
-- Provide keyboard navigation and a basic command console.
-- Keep disk operations disabled and retain a text-mode fallback.
+## Milestone 1 — repeatable kernel build (complete)
+- Compile a freestanding kernel with warnings treated as errors.
+- Verify the Multiboot v1 header and ELF target.
+- Generate a bootable ISO and publish a GitHub Actions artifact.
+- Prevent overlapping build jobs from losing the generated ISO update.
 
-## Phase 2 — kernel foundations
-- Add CPU exception handling, an interrupt descriptor table and timer support.
-- Improve keyboard input and add mouse support.
-- Establish memory-map and physical-memory management.
-- Add a device abstraction layer and diagnostics.
+## Milestone 2 — graphical control center and diagnostics (in progress)
+- Framebuffer dashboard with keyboard navigation.
+- Keyboard console and reboot/halt.
+- Add useful CPU and boot-memory diagnostics.
+- Keep unsupported systems and tools clearly marked as unavailable.
 
-## Phase 3 — storage and read-only discovery
-- Add storage drivers and filesystem support after kernel foundations.
-- Begin with read-only disk and partition inventory.
-- Never mount, format, repartition, or write automatically.
+## Milestone 3 — kernel reliability
+- Review the Global Descriptor Table; add an Interrupt Descriptor Table, exception handlers and panic diagnostics.
+- Add PIC remapping, timer interrupts and a buffered keyboard driver.
+- Add memory-map validation and a physical page-frame allocator.
+- Add serial logging and emulator-based boot smoke tests.
 
-## Phase 4 — persistent OS registry and boot manager
-- Store registry metadata on an explicitly identified data partition.
-- Separate registration from actual booting; test each OS boot method.
-- Removing an entry must never delete or format a partition.
+## Milestone 4 — device and storage foundations
+- Introduce explicit device abstractions.
+- Enumerate PCI devices without modifying storage.
+- Add block-device drivers only after interrupt, memory and error-handling foundations are tested.
+- Start with read-only partition and filesystem inspection.
 
-## Phase 5 — installer, recovery, and broader compatibility
-- Use explicit target selection, clear disk identity and multiple confirmations.
-- Never use the development host's disk as an implicit target.
-- Expand drivers incrementally and research Windows application compatibility without promising arbitrary EXE/MSI support.
+## Milestone 5 — filesystem and persistence
+- Implement a small, tested filesystem path before writing user data.
+- Add a persistent OS registry with versioning, integrity checks and recovery behavior.
+- Separate registry entries from verified boot methods.
 
-## Current milestone
-- Build a freestanding ISO in GitHub Actions.
-- Boot with EFI disabled.
-- Show the graphical control center when a compatible framebuffer is available.
-- Support keyboard navigation and console commands.
-- Never scan, mount, or modify disks in this prototype.
+## Milestone 6 — multi-OS boot manager
+- Add explicit, read-only inventory of disks and partitions.
+- Implement individual boot methods only after each has repeatable tests.
+- Removing a registry entry must never delete an OS or alter its partition.
+- Never assume device names such as /dev/sda remain stable.
+
+## Milestone 7 — desktop and applications
+- Add a process model, user/kernel boundaries, system calls, scheduling and virtual memory.
+- Add a user-space runtime, compositor/window manager, input stack and graphics drivers.
+- Evaluate networking, audio, USB and package management independently.
+- Treat Windows EXE/MSI compatibility as a separate research project, not a promise.
+
+## Milestone 8 — installer and deployment hardening
+- Identify target disks by model, capacity and stable identifiers.
+- Require clear target selection, multiple confirmations and backups before destructive actions.
+- Never use a development host disk as an implicit target.
+- Run boot tests in QEMU/VirtualBox and publish checksums and release notes.
+
+## Non-negotiable safety rules
+- Read-only first for all storage discovery.
+- No automatic partitioning, formatting, wiping or installation.
+- A registry entry is not proof that an OS is bootable.
+- No universal compatibility claims.
+- Every milestone must distinguish implemented features from planned ones.
