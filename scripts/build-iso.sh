@@ -26,11 +26,14 @@ mkdir -p build iso/boot isobuilds
 gcc -m32 -std=gnu11 -ffreestanding -fno-pie -fno-stack-protector \
   -fno-builtin -fno-asynchronous-unwind-tables -fno-unwind-tables -O2 -Wall -Wextra -Werror -c kernel/kernel.c -o build/kernel.o
 gcc -m32 -ffreestanding -fno-pie -c kernel/boot.S -o build/boot.o
+gcc -m32 -ffreestanding -fno-pie -c kernel/interrupts.S -o build/interrupts-asm.o
+gcc -m32 -std=gnu11 -ffreestanding -fno-pie -fno-stack-protector -fno-builtin -fno-asynchronous-unwind-tables -fno-unwind-tables -O2 -Wall -Wextra -Werror -c kernel/interrupts.c -o build/interrupts.o
+gcc -m32 -std=gnu11 -ffreestanding -fno-pie -fno-stack-protector -fno-builtin -fno-asynchronous-unwind-tables -fno-unwind-tables -O2 -Wall -Wextra -Werror -c kernel/serial.c -o build/serial.o
 
 # Keep the Multiboot header inside GRUB's first-8-KiB search window.
 # GNU ld on hosted runners may otherwise use a very large default page size.
 ld -m elf_i386 -z max-page-size=0x1000 -T kernel/linker.ld -nostdlib \
-  -o build/hybrid-kernel build/boot.o build/kernel.o
+  -o build/hybrid-kernel build/boot.o build/kernel.o build/interrupts-asm.o build/interrupts.o build/serial.o
 
 echo "Kernel sections:"
 readelf -S build/hybrid-kernel
