@@ -1,0 +1,13 @@
+# Debian live-build output
+.chroot/
+.build/
+.binary/
+.cache/
+config/binary
+config/bootstrap
+config/chroot
+config/common
+config/source
+*.iso
+*.img
+*.log
