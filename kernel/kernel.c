@@ -22,7 +22,6 @@ static uint32_t ram_mb;
 static char ram_label[16]="UNKNOWN";
 static char cpu_vendor[13]="UNKNOWN";
 static inline void outb(uint16_t p,uint8_t v){__asm__ volatile("outb %0, %1"::"a"(v),"Nd"(p));}
-static inline uint8_t inb(uint16_t p){uint8_t v;__asm__ volatile("inb %1, %0":"=a"(v):"Nd"(p));return v;}
 static const uint8_t font[36][7]={
 {14,17,19,21,25,17,14},{4,12,4,4,4,4,14},{14,17,1,2,4,8,31},{30,1,1,14,1,1,30},{2,6,10,18,31,2,2},{31,16,16,30,1,1,30},{6,8,16,30,17,17,14},{31,1,2,4,8,8,8},{14,17,17,14,17,17,14},{14,17,17,15,1,2,12},
 {14,17,17,31,17,17,17},{30,17,17,30,17,17,30},{14,17,16,16,16,17,14},{28,18,17,17,17,18,28},{31,16,16,30,16,16,31},{31,16,16,30,16,16,16},{14,17,16,23,17,17,15},{17,17,17,31,17,17,17},{14,4,4,4,4,4,14},{7,2,2,2,18,18,12},{17,18,20,24,20,18,17},{16,16,16,16,16,16,31},{17,27,21,21,17,17,17},{17,25,21,19,17,17,17},{14,17,17,17,17,17,14},{30,17,17,30,16,16,16},{14,17,17,17,21,18,13},{30,17,17,30,20,18,17},{15,16,16,14,1,1,30},{31,4,4,4,4,4,4},{17,17,17,17,17,17,14},{17,17,17,17,17,10,4},{17,17,17,21,21,21,10},{17,17,10,4,10,17,17},{17,17,10,4,4,4,4},{31,1,2,4,8,16,31}};
@@ -79,7 +78,7 @@ void kernel_main(uint32_t magic,uint32_t mbi_addr){
  if(flags&1u){uint32_t low=*(const uint32_t*)(const void*)(m+4),high=*(const uint32_t*)(const void*)(m+8);ram_mb=(low+high+1024u)/1024u;number(ram_mb,ram_label); }
  if((flags&(1u<<12))&&*(const uint32_t*)(const void*)(m+92)==0){uint64_t a=*(const uint64_t*)(const void*)(m+88);pitch=*(const uint32_t*)(const void*)(m+96);sw=*(const uint32_t*)(const void*)(m+100);sh=*(const uint32_t*)(const void*)(m+104);uint8_t bpp=m[108],type=m[109];
  if(a&&bpp==32&&type==1&&sw>=640&&sh>=480&&pitch>=sw*4){fb=(uint32_t*)(uintptr_t)(uint32_t)a;rp=m[110];gp=m[112];bp=m[114];if(rp<24&&gp<24&&bp<24)gfx=1;}}}
- serial_init(); serial_write("HYBRID: serial online\r\n"); interrupts_init(); serial_write("HYBRID: IDT, PIC, PIT and keyboard IRQs online\r\n"); serial_write("HYBRID: kernel initialised\r\n"); draw();for(;;){char c=key();if(c==27){console_mode=0;len=0;line[0]=0;draw();continue;}if(!console_mode){if(c>='1'&&c<='4'){page=c-'1';draw();}else if(c=='h'||c=='H'){page=0;draw();}else if(c=='c'||c=='C'){console_mode=1;len=0;line[0]=0;draw();}else if(c=='r'||c=='R')reboot();continue;}
+ serial_init(); serial_write("HYBRID: serial online\r\n"); interrupts_init(); serial_write("HYBRID: IDT, PIC, PIT and keyboard IRQs online\r\n"); serial_write("HYBRID: kernel initialised\r\n"); serial_init(); serial_write("HYBRID: serial online\r\n"); interrupts_init(); serial_write("HYBRID: IDT, PIC, PIT and keyboard IRQs online\r\n"); serial_write("HYBRID: kernel initialised\r\n"); draw();for(;;){char c=key();if(c==27){console_mode=0;len=0;line[0]=0;draw();continue;}if(!console_mode){if(c>='1'&&c<='4'){page=c-'1';draw();}else if(c=='h'||c=='H'){page=0;draw();}else if(c=='c'||c=='C'){console_mode=1;len=0;line[0]=0;draw();}else if(c=='r'||c=='R')reboot();continue;}
  if(c=='\t') {
   continue;
  }
