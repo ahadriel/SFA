@@ -15,6 +15,11 @@ on:
 permissions:
   contents: write
 
+# A newer source push supersedes an older ISO build. Avoid publishing stale images.
+concurrency:
+  group: hybrid-os-iso-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-22.04
