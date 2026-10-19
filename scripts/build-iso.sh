@@ -15,6 +15,8 @@ fi
 
 chmod 0755 config/includes.chroot/usr/local/sbin/hybrid
 
+# The workflow runner is Ubuntu, but the image being built is Debian Bookworm.
+# Explicitly set Debian mirrors so live-build cannot inherit Ubuntu's archive.
 lb config \
   --distribution bookworm \
   --architectures amd64 \
@@ -22,6 +24,12 @@ lb config \
   --bootloader grub \
   --debian-installer false \
   --archive-areas "main contrib non-free-firmware" \
+  --mirror-bootstrap https://deb.debian.org/debian/ \
+  --mirror-bootstrap-security https://security.debian.org/debian-security/ \
+  --mirror-chroot https://deb.debian.org/debian/ \
+  --mirror-chroot-security https://security.debian.org/debian-security/ \
+  --mirror-binary https://deb.debian.org/debian/ \
+  --mirror-binary-security https://security.debian.org/debian-security/ \
   --iso-application "Hybrid OS" \
   --iso-volume "HYBRID_OS"
 
