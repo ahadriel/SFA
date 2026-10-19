@@ -19,7 +19,7 @@ lb config \
   --distribution bookworm \
   --architectures amd64 \
   --binary-images iso-hybrid \
-  --bootloaders grub-efi \
+  --bootloader grub \
   --debian-installer false \
   --archive-areas "main contrib non-free-firmware" \
   --iso-application "Hybrid OS" \
