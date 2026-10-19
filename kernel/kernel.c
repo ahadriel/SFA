@@ -87,4 +87,3 @@ void kernel_main(uint32_t magic,uint32_t mbi_addr){
  }
  }
 }
-}
