@@ -149,10 +149,17 @@ static void set_output(const char *s) {
 }
 
 static void run_command(void) {
-    if (eq(line, "help")) set_output("Commands: help, clear, about, status, os list, reboot, halt");
-    else if (eq(line, "clear")) set_output("Console cleared. The Hybrid dashboard is ready.");
+    /* Shell commands are case-insensitive, even though the UI preserves input case. */
+    for (size_t i = 0; line[i]; ++i) {
+        if (line[i] >= 'A' && line[i] <= 'Z') line[i] = (char)(line[i] - 'A' + 'a');
+    }
+
+    if (eq(line, "help")) set_output("Commands: help, clear/cls, about, version/ver, theme, status, os list, reboot, halt");
+    else if (eq(line, "clear") || eq(line, "cls")) set_output("");
     else if (eq(line, "about")) set_output("Hybrid OS: independent freestanding C/ASM kernel; GRUB Multiboot v1.");
-    else if (eq(line, "status")) set_output("Kernel running. Memory, storage, networking and GUI are not implemented.");
+    else if (eq(line, "version") || eq(line, "ver")) set_output("Hybrid OS kernel prototype 0.1 | x86 32-bit | BIOS/Multiboot");
+    else if (eq(line, "theme")) set_output("Theme: Midnight dark | accent: cyan/seafoam | renderer: VGA text mode");
+    else if (eq(line, "status")) set_output("Kernel: running | memory, filesystem, network and GUI: pending.");
     else if (eq(line, "os list")) set_output("OS registry is planned. No disks are scanned or modified by this command.");
     else if (eq(line, "reboot")) {
         set_output("Requesting reboot...");
