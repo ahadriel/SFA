@@ -46,7 +46,11 @@ cp build/hybrid-kernel iso/boot/hybrid-kernel
 grub-mkrescue -o isobuilds/hybrid-os-cli.iso iso
 
 test -s isobuilds/hybrid-os-cli.iso
+test -s iso/boot/hybrid-kernel
+test -s iso/boot/grub/grub.cfg
+readelf -h build/hybrid-kernel | grep -q "Intel 80386"
+grub-file --is-x86-multiboot build/hybrid-kernel
 echo
 echo "Build successful: $ROOT/isobuilds/hybrid-os-cli.iso"
-echo "Milestone: standalone CLI kernel ISO (Legacy BIOS/Multiboot)."
+echo "Milestone: standalone graphical kernel ISO (Legacy BIOS/Multiboot)."
 echo "VirtualBox: disable EFI for this first milestone."
