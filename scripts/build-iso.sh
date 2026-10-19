@@ -22,7 +22,7 @@ for tool in gcc ld grub-file grub-mkrescue xorriso readelf; do
   }
 done
 
-mkdir -p build iso/boot
+mkdir -p build iso/boot isobuilds
 gcc -m32 -std=gnu11 -ffreestanding -fno-pie -fno-stack-protector \
   -fno-builtin -fno-asynchronous-unwind-tables -fno-unwind-tables -O2 -Wall -Wextra -Werror -c kernel/kernel.c -o build/kernel.o
 gcc -m32 -ffreestanding -fno-pie -c kernel/boot.S -o build/boot.o
@@ -43,10 +43,10 @@ if ! grub-file --is-x86-multiboot build/hybrid-kernel; then
 fi
 
 cp build/hybrid-kernel iso/boot/hybrid-kernel
-grub-mkrescue -o hybrid-os-cli.iso iso
+grub-mkrescue -o isobuilds/hybrid-os-cli.iso iso
 
-test -s hybrid-os-cli.iso
+test -s isobuilds/hybrid-os-cli.iso
 echo
-echo "Build successful: $ROOT/hybrid-os-cli.iso"
+echo "Build successful: $ROOT/isobuilds/hybrid-os-cli.iso"
 echo "Milestone: standalone CLI kernel ISO (Legacy BIOS/Multiboot)."
 echo "VirtualBox: disable EFI for this first milestone."
