@@ -1,38 +1,31 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(cd "$(dirname "\${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-if [[ "$(id -u)" -ne 0 ]]; then
-  echo "Run this script as root, for example: sudo ./scripts/build-iso.sh"
+for tool in gcc ld grub-file grub-mkrescue xorriso; do
+  command -v "$tool" >/dev/null 2>&1 || {
+    echo "Missing build tool: $tool"
+    exit 1
+  }
+done
+
+mkdir -p build iso/boot
+gcc -m32 -std=gnu11 -ffreestanding -fno-pie -fno-stack-protector \
+  -fno-builtin -O2 -Wall -Wextra -Werror -c kernel/kernel.c -o build/kernel.o
+gcc -m32 -ffreestanding -fno-pie -c kernel/boot.S -o build/boot.o
+ld -m elf_i386 -T kernel/linker.ld -nostdlib -o build/hybrid-kernel build/boot.o build/kernel.o
+
+if ! grub-file --is-x86-multiboot build/hybrid-kernel; then
+  echo "Kernel does not contain a valid Multiboot header."
   exit 1
 fi
-if ! command -v lb >/dev/null 2>&1; then
-  echo "Missing live-build. On Debian/Ubuntu, install live-build and debootstrap first."
-  exit 1
-fi
 
-chmod 0755 config/includes.chroot/usr/local/sbin/hybrid
+cp build/hybrid-kernel iso/boot/hybrid-kernel
+grub-mkrescue -o hybrid-os-cli.iso iso
 
-# The workflow runner is Ubuntu, but the image being built is Debian Bookworm.
-# Explicitly set Debian mirrors so live-build cannot inherit Ubuntu's archive.
-lb config \
-  --distribution bookworm \
-  --architectures amd64 \
-  --binary-images iso-hybrid \
-  --bootloader grub \
-  --debian-installer false \
-  --archive-areas "main contrib non-free-firmware" \
-  --mirror-bootstrap https://deb.debian.org/debian/ \
-  --mirror-bootstrap-security https://security.debian.org/debian-security/ \
-  --mirror-chroot https://deb.debian.org/debian/ \
-  --mirror-chroot-security https://security.debian.org/debian-security/ \
-  --mirror-binary https://deb.debian.org/debian/ \
-  --mirror-binary-security https://security.debian.org/debian-security/ \
-  --iso-application "Hybrid OS" \
-  --iso-volume "HYBRID_OS"
-
-lb build
 echo
-echo "Build finished. Look for a generated .iso in the repository root."
+echo "Build successful: $ROOT/hybrid-os-cli.iso"
+echo "This first milestone is a standalone BIOS/Legacy bootable CLI kernel."
+echo "In VirtualBox, create a VM with EFI disabled and boot this ISO."
