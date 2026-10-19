@@ -1,0 +1,136 @@
+#!/bin/bash
+# Hybrid OS prototype shell: safe, read-only discovery and registry management.
+set -u
+
+REG_DIR="${HYBRID_STATE_DIR:-/var/lib/hybrid}"
+REG_FILE="$REG_DIR/os-registry.tsv"
+
+banner() {
+  printf '\n'
+  printf '  HYBRID OS — MULTI-OS CONTROL LAYER\n'
+  printf '  Prototype build | changes to disks are disabled\n\n'
+}
+
+ensure_registry() {
+  if [[ ! -d "$REG_DIR" ]]; then
+    mkdir -p "$REG_DIR" 2>/dev/null || return 1
+  fi
+  if [[ ! -f "$REG_FILE" ]]; then
+    : > "$REG_FILE" 2>/dev/null || return 1
+  fi
+}
+
+list_os() {
+  echo "Registered operating systems:"
+  if [[ ! -s "$REG_FILE" ]]; then
+    echo "  (none yet)"
+    return
+  fi
+  printf '%-20s %-16s %-12s %s\n' "NAME" "METHOD" "IDENTIFIER" "NOTES"
+  while IFS=$'\t' read -r name method identifier notes; do
+    [[ -n "${name:-}" ]] || continue
+    printf '%-20s %-16s %-12s %s\n' "$name" "${method:-unknown}" "${identifier:-—}" "${notes:-}"
+  done < "$REG_FILE"
+}
+
+show_disks() {
+  echo "Disk inventory (read-only):"
+  if command -v lsblk >/dev/null 2>&1; then
+    lsblk -o NAME,TYPE,SIZE,FSTYPE,LABEL,UUID,MOUNTPOINTS,MODEL,RO
+  else
+    echo "lsblk is unavailable in this environment."
+  fi
+  echo
+  echo "This command does not partition, format, or modify disks."
+}
+
+add_os() {
+  local name method identifier notes
+  read -r -p "Friendly OS name (letters/numbers/dot/_/- only): " name
+  if [[ ! "$name" =~ ^[A-Za-z0-9._-]{1,40}$ ]]; then
+    echo "Invalid name. Use 1–40 letters, numbers, dots, underscores, or hyphens."
+    return 1
+  fi
+  if grep -Fq "$name"$'\t' "$REG_FILE"; then
+    echo "That name is already registered."
+    return 1
+  fi
+  echo "Boot methods are prototypes; registering an entry does not guarantee it can boot."
+  echo "  linux-kernel  - Linux kernel/initramfs entry (future milestone)"
+  echo "  chainloader   - existing bootloader (future milestone)"
+  echo "  iso           - ISO image (support varies; future milestone)"
+  read -r -p "Method: " method
+  case "$method" in
+    linux-kernel|chainloader|iso) ;;
+    *) echo "Unknown method."; return 1 ;;
+  esac
+  read -r -p "Partition UUID or image path: " identifier
+  if [[ -z "$identifier" || "$identifier" == *$'\t'* || "$identifier" == *$'\n'* ]]; then
+    echo "Identifier cannot be empty or contain tabs/newlines."
+    return 1
+  fi
+  read -r -p "Notes (optional): " notes
+  notes="${notes//$'\t'/ }"
+  notes="${notes//$'\n'/ }"
+  printf '%s\t%s\t%s\t%s\n' "$name" "$method" "$identifier" "$notes" >> "$REG_FILE"
+  echo "Registered '$name'. No disk or OS files were changed."
+  echo "Booting registered entries will be enabled only after the relevant boot method is implemented and tested."
+}
+
+remove_os() {
+  local name temp
+  read -r -p "Name of registry entry to remove (OS files will NOT be deleted): " name
+  if [[ ! "$name" =~ ^[A-Za-z0-9._-]{1,40}$ ]]; then
+    echo "Invalid name."
+    return 1
+  fi
+  if ! grep -Fq "$name"$'\t' "$REG_FILE"; then
+    echo "No entry named '$name'."
+    return 1
+  fi
+  read -r -p "Remove registry entry '$name'? Type REMOVE to confirm: " confirm
+  [[ "${confirm:-}" == "REMOVE" ]] || { echo "Cancelled."; return 0; }
+  temp="$(mktemp)"
+  awk -F '\t' -v target="$name" '$1 != target' "$REG_FILE" > "$temp"
+  cat "$temp" > "$REG_FILE"
+  rm -f "$temp"
+  echo "Entry removed. The operating system and its partition were not touched."
+}
+
+help_text() {
+  cat <<'HELP'
+Commands:
+  help      Show commands
+  list      List registered OS entries
+  disks     Show disks and partitions (read-only)
+  add       Register an OS entry (does not install or make it bootable)
+  remove    Remove a registry entry only
+  reboot    Reboot this environment
+  poweroff  Shut down
+  exit      Leave the Hybrid shell
+HELP
+}
+
+main() {
+  ensure_registry || { echo "Cannot create registry at $REG_DIR"; exit 1; }
+  banner
+  help_text
+  while true; do
+    printf '\nhybrid> '
+    IFS= read -r cmd || break
+    case "$cmd" in
+      help|h) help_text ;;
+      list|ls) list_os ;;
+      disks|disk) show_disks ;;
+      add) add_os ;;
+      remove|rm-entry) remove_os ;;
+      reboot) echo "Rebooting..."; reboot; break ;;
+      poweroff|shutdown) echo "Shutting down..."; poweroff; break ;;
+      exit|quit) break ;;
+      "") ;;
+      *) echo "Unknown command: $cmd (type 'help')" ;;
+    esac
+  done
+}
+
+main "$@"
