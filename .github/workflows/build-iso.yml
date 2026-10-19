@@ -31,7 +31,7 @@ jobs:
       - name: Install kernel ISO build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-multilib grub-common grub-pc-bin xorriso mtools
+          sudo apt-get install -y gcc-multilib grub-common grub-pc-bin xorriso mtools qemu-system-x86
 
       - name: Build standalone Hybrid kernel ISO
         run: bash scripts/build-iso.sh
@@ -41,6 +41,20 @@ jobs:
           test -s isobuilds/hybrid-os-cli.iso
           file isobuilds/hybrid-os-cli.iso
           ls -lh isobuilds/hybrid-os-cli.iso
+
+      - name: QEMU boot smoke test
+        shell: bash
+        run: |
+          set +e
+          timeout 10s qemu-system-i386 -machine pc -m 128M -cdrom isobuilds/hybrid-os-cli.iso -boot d -serial stdio -monitor none -display none -no-reboot -no-shutdown > build/qemu-serial.log 2>&1
+          qemu_status=$?
+          set -e
+          cat build/qemu-serial.log
+          if [[ $qemu_status -ne 124 && $qemu_status -ne 0 ]]; then
+            echo "QEMU exited unexpectedly with status $qemu_status"
+            exit 1
+          fi
+          grep -q "HYBRID: kernel initialised" build/qemu-serial.log
 
       - name: Save ISO into the repository
         run: |
