@@ -22,13 +22,20 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
+      - name: Verify build files
+        run: |
+          pwd
+          ls -la
+          test -f scripts/build-iso.sh
+          test -f config/includes.chroot/usr/local/sbin/hybrid
+
       - name: Install live-build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y live-build debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin mtools dosfstools
 
       - name: Build ISO
-        run: sudo ./scripts/build-iso.sh
+        run: sudo bash scripts/build-iso.sh
 
       - name: Find generated ISO
         id: iso
