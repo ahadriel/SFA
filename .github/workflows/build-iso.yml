@@ -33,14 +33,14 @@ jobs:
 
       - name: Verify ISO
         run: |
-          test -s hybrid-os-cli.iso
-          file hybrid-os-cli.iso
-          ls -lh hybrid-os-cli.iso
+          test -s isobuilds/hybrid-os-cli.iso
+          file isobuilds/hybrid-os-cli.iso
+          ls -lh isobuilds/hybrid-os-cli.iso
 
       - name: Upload bootable ISO
         uses: actions/upload-artifact@v4
         with:
           name: hybrid-os-cli-bios
-          path: hybrid-os-cli.iso
+          path: isobuilds/hybrid-os-cli.iso
           if-no-files-found: error
           retention-days: 14
