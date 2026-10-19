@@ -1,11 +1,12 @@
-name: Build Hybrid OS ISO
+name: Build Hybrid OS CLI ISO
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - "config/**"
+      - "kernel/**"
+      - "iso/**"
       - "scripts/**"
       - ".github/workflows/build-iso.yml"
       - "README.md"
@@ -17,42 +18,29 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 90
+    timeout-minutes: 20
     steps:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Verify build files
-        run: |
-          pwd
-          ls -la
-          test -f scripts/build-iso.sh
-          test -f config/includes.chroot/usr/local/sbin/hybrid
-
-      - name: Install live-build dependencies
+      - name: Install kernel ISO build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y live-build debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin mtools dosfstools
+          sudo apt-get install -y gcc-multilib grub-common grub-pc-bin xorriso
 
-      - name: Build ISO
-        run: sudo bash scripts/build-iso.sh
+      - name: Build standalone Hybrid kernel ISO
+        run: bash scripts/build-iso.sh
 
-      - name: Find generated ISO
-        id: iso
-        shell: bash
+      - name: Verify ISO
         run: |
-          ISO="$(find . -maxdepth 1 -type f -name '*.iso' -print -quit)"
-          if [[ -z "$ISO" ]]; then
-            echo "No ISO was produced by live-build."
-            exit 1
-          fi
-          echo "path=$ISO" >> "$GITHUB_OUTPUT"
-          ls -lh "$ISO"
+          test -s hybrid-os-cli.iso
+          file hybrid-os-cli.iso
+          ls -lh hybrid-os-cli.iso
 
-      - name: Upload ISO artifact
+      - name: Upload bootable ISO
         uses: actions/upload-artifact@v4
         with:
-          name: hybrid-os-uefi-amd64
-          path: ${{ steps.iso.outputs.path }}
+          name: hybrid-os-cli-bios
+          path: hybrid-os-cli.iso
           if-no-files-found: error
           retention-days: 14
