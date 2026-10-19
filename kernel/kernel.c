@@ -1,3 +1,5 @@
+#include "interrupts.h"
+#include "serial.h"
 #include <stddef.h>
 #include <stdint.h>
 #define VGA ((volatile uint16_t*)0xB8000)
@@ -70,14 +72,14 @@ static void command(void){for(size_t i=0;line[i];i++)if(line[i]>='A'&&line[i]<='
  else if(line[0])msg("Unknown command. Type help.");else msg("Ready.");
  len=0;line[0]=0;draw();}
 static const char keys[128]={[1]=27,[2]='1',[3]='2',[4]='3',[5]='4',[6]='5',[7]='6',[8]='7',[9]='8',[10]='9',[11]='0',[14]='\b',[15]='\t',[16]='q',[17]='w',[18]='e',[19]='r',[20]='t',[21]='y',[22]='u',[23]='i',[24]='o',[25]='p',[28]='\n',[30]='a',[31]='s',[32]='d',[33]='f',[34]='g',[35]='h',[36]='j',[37]='k',[38]='l',[44]='z',[45]='x',[46]='c',[47]='v',[48]='b',[49]='n',[50]='m',[57]=' '};
-static char key(void){for(;;){if(!(inb(0x64)&1))continue;uint8_t s=inb(0x60);if(s==0x2A||s==0x36){shift=1;continue;}if(s==0xAA||s==0xB6){shift=0;continue;}if(s&0x80)continue;char c=keys[s];if(shift&&c>='a'&&c<='z')c=(char)(c-'a'+'A');if(shift&&c>='1'&&c<='9')c="!@#$%^&*("[c-'1'];if(shift&&c=='0')c=')';return c;}}
+static char key(void){for(;;){uint8_t s=keyboard_read_scancode();if(!s){__asm__ volatile("hlt");continue;}if(s==0x2A||s==0x36){shift=1;continue;}if(s==0xAA||s==0xB6){shift=0;continue;}if(s&0x80)continue;char c=keys[s];if(shift&&c>='a'&&c<='z')c=(char)(c-'a'+'A');if(shift&&c>='1'&&c<='9')c="!@#$%^&*("[c-'1'];if(shift&&c=='0')c=')';return c;}}
 void kernel_main(uint32_t magic,uint32_t mbi_addr){
  detect_cpu();
  if(magic==0x2BADB002u&&mbi_addr){const uint8_t*m=(const uint8_t*)(uintptr_t)mbi_addr;uint32_t flags=*(const uint32_t*)(const void*)m;
  if(flags&1u){uint32_t low=*(const uint32_t*)(const void*)(m+4),high=*(const uint32_t*)(const void*)(m+8);ram_mb=(low+high+1024u)/1024u;number(ram_mb,ram_label); }
  if((flags&(1u<<12))&&*(const uint32_t*)(const void*)(m+92)==0){uint64_t a=*(const uint64_t*)(const void*)(m+88);pitch=*(const uint32_t*)(const void*)(m+96);sw=*(const uint32_t*)(const void*)(m+100);sh=*(const uint32_t*)(const void*)(m+104);uint8_t bpp=m[108],type=m[109];
  if(a&&bpp==32&&type==1&&sw>=640&&sh>=480&&pitch>=sw*4){fb=(uint32_t*)(uintptr_t)(uint32_t)a;rp=m[110];gp=m[112];bp=m[114];if(rp<24&&gp<24&&bp<24)gfx=1;}}}
- draw();for(;;){char c=key();if(c==27){console_mode=0;len=0;line[0]=0;draw();continue;}if(!console_mode){if(c>='1'&&c<='4'){page=c-'1';draw();}else if(c=='h'||c=='H'){page=0;draw();}else if(c=='c'||c=='C'){console_mode=1;len=0;line[0]=0;draw();}else if(c=='r'||c=='R')reboot();continue;}
+ serial_init(); serial_write("HYBRID: serial online\r\n"); interrupts_init(); serial_write("HYBRID: IDT, PIC, PIT and keyboard IRQs online\r\n"); serial_write("HYBRID: kernel initialised\r\n"); draw();for(;;){char c=key();if(c==27){console_mode=0;len=0;line[0]=0;draw();continue;}if(!console_mode){if(c>='1'&&c<='4'){page=c-'1';draw();}else if(c=='h'||c=='H'){page=0;draw();}else if(c=='c'||c=='C'){console_mode=1;len=0;line[0]=0;draw();}else if(c=='r'||c=='R')reboot();continue;}
  if(c=='\t') {
   continue;
  }
