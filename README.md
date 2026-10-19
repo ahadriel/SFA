@@ -2,30 +2,30 @@
 
 **Your machine. Your operating systems. Your choice.**
 
-Hybrid is an independent operating-system experiment: a freestanding x86 kernel with a dark, EONIS-inspired control-center GUI. It is not a Debian/Ubuntu live system.
+Hybrid OS is an operating-system project with two deliberately separate tracks: a freestanding x86 kernel experiment and a practical desktop live image.
 
-> **Status: early kernel prototype.** The kernel requests an 800x600x32 Multiboot framebuffer and draws a graphical dashboard using its own tiny bitmap font and rectangle renderer. It includes keyboard navigation and a basic console. If a compatible framebuffer is unavailable, a text-mode fallback is shown.
+## Downloads
 
-## GUI controls
+- **Hybrid Desktop Edition** — a usable amd64 XFCE live desktop with Firefox ESR, networking tools, development tools, and Wine compatibility tools. Run the **Build Hybrid Desktop ISO** GitHub Actions workflow and download the `hybrid-desktop-amd64` artifact. See [Desktop documentation](docs/DESKTOP.md).
+- **Freestanding Kernel Prototype** — a standalone 32-bit x86 kernel with a custom graphical control-center interface and console, built as `isobuilds/hybrid-os-cli.iso`. See [the kernel roadmap](docs/ROADMAP.md).
 
-- `1` — Home
-- `2` — Systems (safe placeholder)
-- `3` — Tools
-- `4` — About
-- `C` — Open console
-- `H` — Return to Home
-- `R` — Reboot
-- In the console: `help`, `status`, `about`, `version`, `theme`, `os list`, `clear`, `reboot`, `halt`
-- `Esc` — Close console
+## Desktop edition
 
-The UI is keyboard-driven; mouse input and a window manager are not implemented.
+The desktop edition uses Debian's mature kernel, hardware drivers, package ecosystem, and XFCE desktop so it can provide useful desktop features now. It includes Firefox ESR, NetworkManager, developer tools, Python, Git, filesystem utilities, Wine, and Winetricks.
 
-## Safety and limitations
+Wine supports some Windows applications, not all EXE/MSI software. Apps that need Windows kernel drivers, certain anti-cheat systems, DRM, or unsupported dependencies may not run. Hybrid OS is not Windows and does not claim universal compatibility.
 
-This is not yet a general-purpose OS. The kernel has no filesystem, storage driver, networking, USB stack, full memory management, mouse support, or Windows application compatibility. The Systems page is a mock-up of planned functionality and does not discover installed operating systems.
+## Freestanding kernel prototype
 
-The prototype does not scan, mount, partition, format, or write to disks. OS registration and booting are separate capabilities; each supported OS needs a tested boot method. Arbitrary ISO boot and Windows application compatibility cannot be assumed.
+The independent kernel requests an 800x600x32 Multiboot framebuffer, draws its own dark dashboard, and supports keyboard navigation and a small console. It is an early prototype, not yet a general-purpose OS: it lacks a full filesystem, storage and network drivers, user-mode processes, a window manager, and broad hardware support.
 
-## Build and VirtualBox
+## Safety
 
-GitHub Actions builds `isobuilds/hybrid-os-cli.iso` and uploads an artifact named `hybrid-os-cli-bios`. Use a 32-bit x86 / Other or Linux VM, allocate 2 GB RAM and 2 CPU cores, attach the ISO, and **disable EFI** for this Legacy BIOS/Multiboot milestone.
+The desktop live image does not automatically partition, format, or install to disks. Starting an installer is an explicit action; selecting the wrong target can erase data. Back up important files and verify the target disk before confirming installation. The freestanding prototype does not scan or write disks.
+
+## Build
+
+- Kernel ISO: **Build Hybrid OS CLI ISO** workflow; Legacy BIOS/Multiboot.
+- Desktop ISO: **Build Hybrid Desktop ISO** workflow; amd64 with BIOS and EFI boot support.
+
+See [docs/DESKTOP.md](docs/DESKTOP.md), [docs/ROADMAP.md](docs/ROADMAP.md), and [docs/SAFETY.md](docs/SAFETY.md).

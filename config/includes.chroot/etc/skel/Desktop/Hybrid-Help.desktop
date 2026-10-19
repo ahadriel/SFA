@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Hybrid OS Help
+Comment=Read about Hybrid OS and its safety model
+Exec=mousepad /usr/share/hybrid/README.txt
+Icon=help-about
+Terminal=false
+Categories=System;Documentation;
