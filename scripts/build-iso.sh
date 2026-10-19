@@ -24,7 +24,7 @@ done
 
 mkdir -p build iso/boot
 gcc -m32 -std=gnu11 -ffreestanding -fno-pie -fno-stack-protector \
-  -fno-builtin -O2 -Wall -Wextra -Werror -c kernel/kernel.c -o build/kernel.o
+  -fno-builtin -fno-asynchronous-unwind-tables -fno-unwind-tables -O2 -Wall -Wextra -Werror -c kernel/kernel.c -o build/kernel.o
 gcc -m32 -ffreestanding -fno-pie -c kernel/boot.S -o build/boot.o
 
 # Keep the Multiboot header inside GRUB's first-8-KiB search window.
@@ -37,7 +37,8 @@ readelf -S build/hybrid-kernel
 if ! grub-file --is-x86-multiboot build/hybrid-kernel; then
   echo "ERROR: kernel does not contain a valid Multiboot header in the required location."
   echo "Header bytes near the start of the file:"
-  od -An -tx4 -N 8192 build/hybrid-kernel | head -n 8 || true
+  od -An -tx4 -N 8192 build/hybrid-kernel > build/header-dump.txt || true
+  head -n 8 build/header-dump.txt || true
   exit 1
 fi
 
