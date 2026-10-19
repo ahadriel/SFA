@@ -13,7 +13,7 @@ on:
       - "docs/**"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -36,6 +36,18 @@ jobs:
           test -s isobuilds/hybrid-os-cli.iso
           file isobuilds/hybrid-os-cli.iso
           ls -lh isobuilds/hybrid-os-cli.iso
+
+      - name: Save ISO into the repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add isobuilds/hybrid-os-cli.iso
+          if git diff --cached --quiet; then
+            echo "The generated ISO is unchanged; no repository commit is needed."
+          else
+            git commit -m "Update built Hybrid OS ISO"
+            git push
+          fi
 
       - name: Upload bootable ISO
         uses: actions/upload-artifact@v4
