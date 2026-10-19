@@ -41,12 +41,19 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Another workflow run may have pushed while this build was running.
+          # Rebase the generated-artifact commit onto the latest main without
+          # carrying an outdated source checkout into the new commit.
+          git fetch origin main
+          git reset --soft origin/main
           git add -f isobuilds/hybrid-os-cli.iso
+
           if git diff --cached --quiet; then
             echo "The generated ISO is unchanged; no repository commit is needed."
           else
             git commit -m "Update built Hybrid OS ISO"
-            git push
+            git push origin HEAD:main
           fi
 
       - name: Upload bootable ISO
