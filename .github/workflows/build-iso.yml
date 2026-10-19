@@ -26,7 +26,7 @@ jobs:
       - name: Install kernel ISO build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-multilib grub-common grub-pc-bin xorriso
+          sudo apt-get install -y gcc-multilib grub-common grub-pc-bin xorriso mtools
 
       - name: Build standalone Hybrid kernel ISO
         run: bash scripts/build-iso.sh
