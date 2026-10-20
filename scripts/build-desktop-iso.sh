@@ -13,7 +13,7 @@ sudo lb config \
   --distribution bookworm \
   --architectures amd64 \
   --binary-images iso-hybrid \
-  --bootloaders "grub-efi,grub-pc" \
+  --bootloader grub \
   --debian-installer live \
   --archive-areas "main contrib non-free non-free-firmware" \
   --apt-recommends true \
