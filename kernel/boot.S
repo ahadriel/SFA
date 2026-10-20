@@ -1,4 +1,4 @@
-/* Multiboot v1 entry: request a linear 800x600x32 framebuffer. */
+/* Multiboot v1 entry: request a linear 640x480x32 framebuffer. */
 .set ALIGN,    1<<0
 .set MEMINFO,  1<<1
 .set VIDEO,    1<<2
@@ -11,8 +11,8 @@
 .long FLAGS
 .long CHECKSUM
 .long 0
-.long 800
-.long 600
+.long 640
+.long 480
 .long 32
 .section .bss
 .align 16
