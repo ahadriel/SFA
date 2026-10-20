@@ -12,6 +12,8 @@ Hybrid OS is a freestanding 32-bit x86 kernel booted through GRUB Multiboot v1 i
 - Framebuffer dashboard with keyboard navigation.
 - Keyboard console and reboot/halt.
 - Add useful CPU and boot-memory diagnostics.
+- Run a read-only legacy ATA/IDE disk probe at startup and on demand (`S`).
+- Count MBR primary partitions when a valid MBR signature is present; do not imply GPT or filesystem discovery.
 - Keep unsupported systems and tools clearly marked as unavailable.
 
 ## Milestone 3 — kernel reliability
