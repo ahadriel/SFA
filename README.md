@@ -17,7 +17,7 @@ Wine supports some Windows applications, not all EXE/MSI software. Apps that nee
 
 ## Freestanding kernel prototype
 
-The independent kernel requests a v86-compatible 640x480x32 Multiboot framebuffer, draws its own dark dashboard, supports keyboard navigation and a small console, and probes legacy ATA/IDE disks plus MBR primary-partition counts in read-only mode. Press `S` in the dashboard to rescan. This is still an early prototype, not a complete multi-OS installer or general-purpose OS: it lacks filesystem drivers, GPT discovery, safe persistent registry, disk-writing installer, UEFI boot support for the freestanding kernel, user-mode processes, a window manager, and broad hardware support.
+The independent kernel requests a v86-compatible 640x480x32 Multiboot framebuffer, draws its own dark dashboard, supports keyboard navigation and a small console, and probes legacy ATA/IDE disks and counts MBR/GPT partitions in read-only mode. Press `S` in the dashboard to rescan. This is still an early prototype, not a complete multi-OS installer or general-purpose OS: it lacks filesystem drivers, GPT discovery, safe persistent registry, disk-writing installer, UEFI boot support for the freestanding kernel, user-mode processes, a window manager, and broad hardware support.
 
 ## Safety
 
