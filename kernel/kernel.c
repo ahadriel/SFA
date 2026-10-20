@@ -15,7 +15,7 @@
 #define BLUE 0x48A9FFu
 #define GOLD 0xE8BE68u
 static uint32_t *fb;
-static uint32_t pitch, sw, sh;
+static uint32_t pitch, sw, sh, fbw, fbh;
 static uint8_t rp, gp, bp;
 static int gfx, page, console_mode, shift;
 static char line[64], output[88]="Welcome to Hybrid OS. Your control center is ready.";
@@ -30,7 +30,7 @@ static const uint8_t font[36][7]={
 {14,17,17,31,17,17,17},{30,17,17,30,17,17,30},{14,17,16,16,16,17,14},{28,18,17,17,17,18,28},{31,16,16,30,16,16,31},{31,16,16,30,16,16,16},{14,17,16,23,17,17,15},{17,17,17,31,17,17,17},{14,4,4,4,4,4,14},{7,2,2,2,18,18,12},{17,18,20,24,20,18,17},{16,16,16,16,16,16,31},{17,27,21,21,17,17,17},{17,25,21,19,17,17,17},{14,17,17,17,17,17,14},{30,17,17,30,16,16,16},{14,17,17,17,21,18,13},{30,17,17,30,20,18,17},{15,16,16,14,1,1,30},{31,4,4,4,4,4,4},{17,17,17,17,17,17,14},{17,17,17,17,17,10,4},{17,17,17,21,21,21,10},{17,17,10,4,10,17,17},{17,17,10,4,4,4,4},{31,1,2,4,8,16,31}};
 static int gi(char c){if(c>='0'&&c<='9')return c-'0';if(c>='A'&&c<='Z')return c-'A'+10;if(c>='a'&&c<='z')return c-'a'+10;return -1;}
 static uint32_t cv(uint32_t c){return (((c>>16)&255)<<rp)|(((c>>8)&255)<<gp)|((c&255)<<bp);}
-static void px(int x,int y,uint32_t c){if(gfx&&x>=0&&y>=0&&(uint32_t)x<sw&&(uint32_t)y<sh)fb[(uint32_t)y*(pitch/4)+(uint32_t)x]=cv(c);}
+static void px(int x,int y,uint32_t c){if(gfx&&x>=0&&y>=0&&(uint32_t)x<sw&&(uint32_t)y<sh){uint32_t xx=(uint32_t)x*fbw/sw,yy=(uint32_t)y*fbh/sh;if(xx<fbw&&yy<fbh)fb[yy*(pitch/4)+xx]=cv(c);}}
 static void box(int x,int y,int w,int h,uint32_t c){if(!gfx)return;if(x<0){w+=x;x=0;}if(y<0){h+=y;y=0;}if(x+w>(int)sw)w=(int)sw-x;if(y+h>(int)sh)h=(int)sh-y;for(int yy=y;yy<y+h;yy++)for(int xx=x;xx<x+w;xx++)px(xx,yy,c);}
 static void chr(int x,int y,char c,uint32_t col,int z){int n=gi(c);if(n>=0)for(int r=0;r<7;r++)for(int k=0;k<5;k++)if(font[n][r]&(1u<<(4-k)))box(x+k*z,y+r*z,z,z,col);else{}else if(c=='-')box(x,y+6*z,5*z,z,col);else if(c=='.')box(x+2*z,y+6*z,z,z,col);else if(c==':'){box(x+2*z,y+2*z,z,z,col);box(x+2*z,y+6*z,z,z,col);}}
 static void txt(int x,int y,const char*s,uint32_t c,int z){while(*s&&x<(int)sw-6*z){chr(x,y,*s++,c,z);x+=6*z;}}
@@ -79,8 +79,8 @@ void kernel_main(uint32_t magic,uint32_t mbi_addr){
  detect_cpu();
  if(magic==0x2BADB002u&&mbi_addr){const uint8_t*m=(const uint8_t*)(uintptr_t)mbi_addr;uint32_t flags=*(const uint32_t*)(const void*)m;
  if(flags&1u){uint32_t low=*(const uint32_t*)(const void*)(m+4),high=*(const uint32_t*)(const void*)(m+8);ram_mb=(low+high+1024u)/1024u;number(ram_mb,ram_label); }
- if((flags&(1u<<12))&&*(const uint32_t*)(const void*)(m+92)==0){uint64_t a=*(const uint64_t*)(const void*)(m+88);pitch=*(const uint32_t*)(const void*)(m+96);sw=*(const uint32_t*)(const void*)(m+100);sh=*(const uint32_t*)(const void*)(m+104);uint8_t bpp=m[108],type=m[109];
- if(a&&bpp==32&&type==1&&sw>=640&&sh>=480&&pitch>=sw*4){fb=(uint32_t*)(uintptr_t)(uint32_t)a;rp=m[110];gp=m[112];bp=m[114];if(rp<24&&gp<24&&bp<24)gfx=1;}}}
+ if((flags&(1u<<12))&&*(const uint32_t*)(const void*)(m+92)==0){uint64_t a=*(const uint64_t*)(const void*)(m+88);pitch=*(const uint32_t*)(const void*)(m+96);fbw=*(const uint32_t*)(const void*)(m+100);fbh=*(const uint32_t*)(const void*)(m+104);uint8_t bpp=m[108],type=m[109];
+ if(a&&bpp==32&&type==1&&fbw>=640&&fbh>=480&&pitch>=fbw*4){fb=(uint32_t*)(uintptr_t)(uint32_t)a;rp=m[110];gp=m[112];bp=m[114];if(rp<24&&gp<24&&bp<24){sw=960;sh=600;gfx=1;}}}}
  serial_init(); serial_write("HYBRID: serial online\r\n"); gdt_init(); serial_write("HYBRID: GDT loaded\r\n"); interrupts_init(); serial_write("HYBRID: IDT, PIC, PIT and keyboard IRQs online\r\n"); serial_write("HYBRID: kernel initialised\r\n"); draw();for(;;){char c=key();if(c==27){console_mode=0;len=0;line[0]=0;draw();continue;}if(!console_mode){if(c>='1'&&c<='4'){page=c-'1';draw();}else if(c=='h'||c=='H'){page=0;draw();}else if(c=='c'||c=='C'){console_mode=1;len=0;line[0]=0;draw();}else if(c=='r'||c=='R')reboot();continue;}
  if(c=='\t') {
   continue;
