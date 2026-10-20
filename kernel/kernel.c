@@ -81,7 +81,7 @@ void kernel_main(uint32_t magic,uint32_t mbi_addr){
  if(flags&1u){uint32_t low=*(const uint32_t*)(const void*)(m+4),high=*(const uint32_t*)(const void*)(m+8);ram_mb=(low+high+1024u)/1024u;number(ram_mb,ram_label); }
  if((flags&(1u<<12))&&*(const uint32_t*)(const void*)(m+92)==0){uint64_t a=*(const uint64_t*)(const void*)(m+88);pitch=*(const uint32_t*)(const void*)(m+96);fbw=*(const uint32_t*)(const void*)(m+100);fbh=*(const uint32_t*)(const void*)(m+104);uint8_t bpp=m[108],type=m[109];
  /* The dashboard layout is designed for an 800x600 logical canvas. Do not use 960x600 here: that made the UI's coordinate system wider than the requested 800x600 v86 framebuffer. Require enough physical space for the complete dashboard; otherwise use the safe text fallback instead of drawing a cropped desktop. */
- if(a&&bpp==32&&type==1&&fbw>=760&&fbh>=540&&pitch>=fbw*4){fb=(uint32_t*)(uintptr_t)(uint32_t)a;rp=m[110];gp=m[112];bp=m[114];if(rp<24&&gp<24&&bp<24){sw=800;sh=600;gfx=1;}}}}
+ if(a&&bpp==32&&type==1&&fbw>=640&&fbh>=480&&pitch>=fbw*4){fb=(uint32_t*)(uintptr_t)(uint32_t)a;rp=m[110];gp=m[112];bp=m[114];if(rp<24&&gp<24&&bp<24){sw=800;sh=600;gfx=1;}}}}
  serial_init(); serial_write("HYBRID: serial online\r\n"); gdt_init(); serial_write("HYBRID: GDT loaded\r\n"); interrupts_init(); serial_write("HYBRID: IDT, PIC, PIT and keyboard IRQs online\r\n"); serial_write("HYBRID: kernel initialised\r\n"); draw();for(;;){char c=key();if(c==27){console_mode=0;len=0;line[0]=0;draw();continue;}if(!console_mode){if(c>='1'&&c<='4'){page=c-'1';draw();}else if(c=='h'||c=='H'){page=0;draw();}else if(c=='c'||c=='C'){console_mode=1;len=0;line[0]=0;draw();}else if(c=='r'||c=='R')reboot();continue;}
  if(c=='\t') {
   continue;
