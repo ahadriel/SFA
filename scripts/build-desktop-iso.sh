@@ -10,12 +10,18 @@ done
 
 # Separate from the small freestanding kernel ISO: this is the practical desktop build.
 sudo lb config \
+  --ignore-system-defaults \
   --distribution bookworm \
   --architectures amd64 \
   --binary-images iso-hybrid \
   --bootloader grub \
   --debian-installer live \
   --archive-areas "main contrib non-free non-free-firmware" \
+  --mirror-bootstrap "http://deb.debian.org/debian" \
+  --mirror-chroot "http://deb.debian.org/debian" \
+  --mirror-chroot-security "http://security.debian.org/debian-security" \
+  --mirror-binary "http://deb.debian.org/debian" \
+  --mirror-binary-security "http://security.debian.org/debian-security" \
   --apt-recommends true \
   --linux-flavours amd64 \
   --iso-application "Hybrid OS Desktop" \
