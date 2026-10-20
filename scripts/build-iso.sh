@@ -7,7 +7,7 @@ cd "$ROOT"
 echo "Hybrid OS standalone kernel build"
 echo "Repository root: $ROOT"
 
-for source in kernel/kernel.c kernel/boot.S kernel/gdt.c kernel/gdt.S kernel/interrupts.c kernel/interrupts.S kernel/serial.c kernel/linker.ld iso/boot/grub/grub.cfg; do
+for source in kernel/kernel.c kernel/boot.S kernel/gdt.c kernel/gdt.S kernel/interrupts.c kernel/interrupts.S kernel/serial.c kernel/storage.c kernel/linker.ld iso/boot/grub/grub.cfg; do
   if [[ ! -f "$source" ]]; then
     echo "ERROR: required source file is missing from the checked-out commit: $source"
     echo "Check that the workflow is building the latest commit on main."
@@ -31,11 +31,12 @@ gcc -m32 -ffreestanding -fno-pie -c kernel/gdt.S -o build/gdt-asm.o
 gcc -m32 -std=gnu11 -ffreestanding -fno-pie -fno-stack-protector -fno-builtin -fno-asynchronous-unwind-tables -fno-unwind-tables -O2 -Wall -Wextra -Werror -c kernel/gdt.c -o build/gdt.o
 gcc -m32 -std=gnu11 -ffreestanding -fno-pie -fno-stack-protector -fno-builtin -fno-asynchronous-unwind-tables -fno-unwind-tables -O2 -Wall -Wextra -Werror -c kernel/interrupts.c -o build/interrupts.o
 gcc -m32 -std=gnu11 -ffreestanding -fno-pie -fno-stack-protector -fno-builtin -fno-asynchronous-unwind-tables -fno-unwind-tables -O2 -Wall -Wextra -Werror -c kernel/serial.c -o build/serial.o
+gcc -m32 -std=gnu11 -ffreestanding -fno-pie -fno-stack-protector -fno-builtin -fno-asynchronous-unwind-tables -fno-unwind-tables -O2 -Wall -Wextra -Werror -c kernel/storage.c -o build/storage.o
 
 # Keep the Multiboot header inside GRUB's first-8-KiB search window.
 # GNU ld on hosted runners may otherwise use a very large default page size.
 ld -m elf_i386 -z max-page-size=0x1000 -T kernel/linker.ld -nostdlib \
-  -o build/hybrid-kernel build/boot.o build/kernel.o build/gdt-asm.o build/gdt.o build/interrupts-asm.o build/interrupts.o build/serial.o
+  -o build/hybrid-kernel build/boot.o build/kernel.o build/gdt-asm.o build/gdt.o build/interrupts-asm.o build/interrupts.o build/serial.o build/storage.o
 
 echo "Kernel sections:"
 readelf -S build/hybrid-kernel

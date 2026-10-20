@@ -1,6 +1,7 @@
 #include "interrupts.h"
 #include "serial.h"
 #include "gdt.h"
+#include "storage.h"
 #include <stddef.h>
 #include <stdint.h>
 #define VGA ((volatile uint16_t*)0xB8000)
@@ -20,6 +21,7 @@ static int gfx, page, console_mode, shift;
 static char line[64], output[88]="Welcome to Hybrid OS. Your control center is ready.";
 static size_t len;
 static uint32_t ram_mb;
+static uint8_t ata_disks, ata_partitions;
 static char ram_label[16]="UNKNOWN";
 static char cpu_vendor[13]="UNKNOWN";
 static inline void outb(uint16_t p,uint8_t v){__asm__ volatile("outb %0, %1"::"a"(v),"Nd"(p));}
@@ -46,7 +48,7 @@ static void draw(void){
  int x=204;txt(x,82,page==0?"OVERVIEW":page==1?"OPERATING SYSTEMS":page==2?"TOOLS AND ACTIONS":"ABOUT HYBRID",WHITE,2);
  txt(x,112,page==0?"YOUR MACHINE. YOUR OPERATING SYSTEMS. YOUR CHOICE.":page==1?"A SAFE HOME FOR YOUR INSTALLED SYSTEMS.":page==2?"KERNEL UTILITIES AVAILABLE IN THIS BUILD.":"AN INDEPENDENT OPERATING SYSTEM IN PROGRESS.",MUTED,1);
  if(page==0){card(x,150,174,112,"KERNEL","RUNNING","MULTIBOOT / BIOS",CYAN);card(x+190,150,174,112,"MEMORY",ram_label,"BOOT MEMORY MAP",BLUE);card(x+380,150,174,112,"GRAPHICS","ACTIVE","FRAMEBUFFER",CYAN);card(x,282,264,118,"SYSTEM REGISTRY","NOT READY","STORAGE PENDING",GOLD);card(x+280,282,258,118,"SAFETY STATUS","READ ONLY","NO DISK WRITES",CYAN);box(x,420,538,94,SURFACE);edge(x,420,538,94,BORDER);txt(x+18,438,"QUICK START",CYAN,1);txt(x+18,462,"PRESS 2 FOR SYSTEMS, 3 FOR TOOLS, C FOR CONSOLE",WHITE,1);txt(x+18,488,"THIS BUILD DOES NOT SCAN OR CHANGE YOUR DISKS",MUTED,1);}
- else if(page==1){card(x,150,538,106,"OS REGISTRY","NOT IMPLEMENTED","NO DISKS SCANNED OR MODIFIED",GOLD);box(x,276,538,104,SURFACE);edge(x,276,538,104,BORDER);txt(x+18,296,"PLANNED CAPABILITIES",CYAN,1);txt(x+18,322,"DETECT INSTALLED SYSTEMS",WHITE,1);txt(x+18,346,"REGISTER AND REMOVE BOOT ENTRIES",WHITE,1);txt(x+18,362,"READ-ONLY PARTITION INVENTORY FIRST",MUTED,1);}
+ else if(page==1){card(x,150,538,106,"ATA DISKS",ata_disks?"DETECTED":"NONE DETECTED","READ-ONLY LEGACY IDE PROBE",ata_disks?CYAN:GOLD);card(x,276,260,96,"MBR PARTITIONS",ata_partitions?"FOUND":"NONE","PRIMARY PARTITION TABLES",BLUE);card(x+278,276,260,96,"USB / AHCI","NOT READY","DRIVERS NOT IMPLEMENTED",GOLD);box(x,390,538,78,SURFACE);edge(x,390,538,78,BORDER);txt(x+18,408,"SAFETY",CYAN,1);txt(x+18,432,"READ-ONLY SCAN. NO PARTITION OR DISK WRITES.",WHITE,1);txt(x+18,450,"ISO INSTALLATION IS NOT ENABLED IN THIS BUILD.",MUTED,1);}
  else if(page==2){card(x,150,260,110,"CONSOLE","AVAILABLE","PRESS C TO OPEN",CYAN);card(x+278,150,260,110,"REBOOT","AVAILABLE","PRESS R TO RESTART",BLUE);box(x,282,538,116,SURFACE);edge(x,282,538,116,BORDER);txt(x+18,302,"CURRENT COMMANDS",CYAN,1);txt(x+18,328,"HELP STATUS ABOUT VERSION",WHITE,1);txt(x+18,352,"THEME OS LIST CLEAR HALT",WHITE,1);txt(x+18,376,"COMMANDS DO NOT PERFORM DISK OPERATIONS",MUTED,1);}
  else{box(x,150,538,238,SURFACE);edge(x,150,538,238,BORDER);txt(x+22,174,"HYBRID OS",CYAN,2);txt(x+22,220,"INDEPENDENT FREESTANDING KERNEL",WHITE,1);txt(x+22,248,"EONIS-INSPIRED DARK CONTROL CENTER",WHITE,1);txt(x+22,290,"CURRENT MILESTONE: GRAPHICS + KEYBOARD",MUTED,1);txt(x+22,320,"NOT A LINUX LIVE SYSTEM",MUTED,1);txt(x+22,350,"BUILT FOR VIRTUAL MACHINE EXPERIMENTS",MUTED,1);}
  box(174,sh-40,sw-174,40,SURFACE);box(174,sh-40,sw-174,1,BORDER);txt(196,sh-26,console_mode?"CONSOLE ACTIVE - ESC RETURNS TO DESKTOP":"1-4 NAVIGATE   C CONSOLE   R REBOOT   H HOME",MUTED,1);
@@ -66,7 +68,7 @@ static void command(void){for(size_t i=0;line[i];i++)if(line[i]>='A'&&line[i]<='
  else if(eq(line,"status"))msg("Kernel running. Framebuffer active. Storage pending.");
  else if(eq(line,"cpu"))msg(cpu_vendor);
  else if(eq(line,"memory")||eq(line,"mem")){char out[32]="Detected RAM: ";char n[16];number(ram_mb,n);size_t p=13;for(size_t i=0;n[i]&&p<sizeof(out)-1;i++)out[p++]=n[i];const char*u=" MiB (boot map)";for(size_t i=0;u[i]&&p<sizeof(out)-1;i++)out[p++]=u[i];out[p]=0;msg(out);}
- else if(eq(line,"os list"))msg("OS registry is not implemented; no disks were changed.");
+ else if(eq(line,"os list")){char out[64]="ATA disks: ";char n[12];number(ata_disks,n);size_t p=11;for(size_t i=0;n[i]&&p<sizeof(out)-1;i++)out[p++]=n[i];const char*u=" partitions: ";for(size_t i=0;u[i]&&p<sizeof(out)-1;i++)out[p++]=u[i];number(ata_partitions,n);for(size_t i=0;n[i]&&p<sizeof(out)-1;i++)out[p++]=n[i];out[p]=0;msg(out);}
  else if(eq(line,"reboot"))reboot();
  else if(eq(line,"halt")){msg("CPU halted. Reset the virtual machine.");draw();for(;;)__asm__ volatile("cli; hlt");}
  else if(line[0])msg("Unknown command. Type help.");else msg("Ready.");
