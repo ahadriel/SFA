@@ -26,6 +26,6 @@ The desktop live image does not automatically partition, format, or install to d
 ## Build
 
 - Kernel ISO: **Build Hybrid OS CLI ISO** workflow; Legacy BIOS/Multiboot.
-- Desktop ISO: **Build Hybrid Desktop ISO** workflow; amd64 with BIOS and EFI boot support.
+- Desktop ISO: **Build Hybrid Desktop ISO** workflow; amd64 live desktop. Bootloader support depends on the live-build version supplied by the runner; the build verifies the resulting ISO's El Torito metadata.
 
 See [docs/DESKTOP.md](docs/DESKTOP.md), [docs/ROADMAP.md](docs/ROADMAP.md), and [docs/SAFETY.md](docs/SAFETY.md).
