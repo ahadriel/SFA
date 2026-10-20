@@ -15,7 +15,7 @@ GitHub Actions workflow **Build Hybrid Desktop ISO** builds the desktop image. R
 
 - Create a Linux/Debian (64-bit) VM.
 - Allocate at least 4 GB RAM (8 GB recommended), 2 CPU cores (4 recommended), and 30 GB virtual disk if you plan to install.
-- The image is configured for BIOS and EFI boot support.
+- The workflow verifies the generated ISO's El Torito boot metadata; check the run output before assuming a particular VM firmware mode is supported.
 - Attach the downloaded ISO as a virtual optical disk and boot.
 - Choose the live desktop. The installer is an explicit user-initiated action.
 
