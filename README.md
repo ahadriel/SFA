@@ -11,7 +11,7 @@ Hybrid OS is an operating-system project with two deliberately separate tracks: 
 
 ## Desktop edition
 
-The desktop edition uses Debian's mature kernel, hardware drivers, package ecosystem, and XFCE desktop so it can provide useful desktop features now. It includes Firefox ESR, NetworkManager, developer tools, Python, Git, filesystem utilities, Wine, and Winetricks.
+The desktop edition uses Debian's mature kernel, hardware drivers, package ecosystem, and XFCE desktop so it can provide useful desktop features now. It includes a graphical Hybrid OS Control Center for read-only disk inventory and local OS/ISO registration; it is not yet a full multi-OS installer or boot manager. It includes Firefox ESR, NetworkManager, developer tools, Python, Git, filesystem utilities, Wine, and Winetricks.
 
 Wine supports some Windows applications, not all EXE/MSI software. Apps that need Windows kernel drivers, certain anti-cheat systems, DRM, or unsupported dependencies may not run. Hybrid OS is not Windows and does not claim universal compatibility.
 
