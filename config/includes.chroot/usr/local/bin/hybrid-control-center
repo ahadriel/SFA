@@ -1,0 +1,130 @@
+#!/usr/bin/python3
+"""Hybrid OS Control Center. All device discovery is read-only."""
+import json, os, subprocess, tkinter as tk
+from tkinter import ttk, filedialog, messagebox
+from pathlib import Path
+
+BG="#0b1018"; PANEL="#131c28"; FG="#e8f0f7"; MUTED="#93a4b8"; ACCENT="#65e6d0"
+STATE=Path(os.environ.get("XDG_STATE_HOME",str(Path.home()/".local/state")))/"hybrid"
+REGISTRY=STATE/"registry.json"
+
+def query(args):
+    try:
+        p=subprocess.run(args,capture_output=True,text=True,timeout=8,check=False)
+        return p.stdout.strip()
+    except (OSError,subprocess.TimeoutExpired): return ""
+
+def load():
+    try:
+        x=json.loads(REGISTRY.read_text(encoding="utf-8"))
+        return x if isinstance(x,list) else []
+    except (OSError,ValueError): return []
+
+def save(items):
+    STATE.mkdir(parents=True,exist_ok=True)
+    tmp=REGISTRY.with_suffix(".tmp")
+    tmp.write_text(json.dumps(items,indent=2)+"\n",encoding="utf-8")
+    os.chmod(tmp,0o600); tmp.replace(REGISTRY)
+
+class Center(tk.Tk):
+    def __init__(self):
+        super().__init__(); self.title("Hybrid OS — Control Center")
+        self.geometry("1000x680"); self.minsize(780,520); self.configure(bg=BG)
+        self.items=load(); st=ttk.Style(self); st.theme_use("clam")
+        st.configure("Treeview",background=PANEL,fieldbackground=PANEL,foreground=FG,rowheight=28)
+        st.configure("Treeview.Heading",background="#1b2938",foreground=ACCENT)
+        head=tk.Frame(self,bg=BG,padx=24,pady=18); head.pack(fill="x")
+        tk.Label(head,text="HYBRID",bg=BG,fg=ACCENT,font=("DejaVu Sans",22,"bold")).pack(side="left")
+        tk.Label(head,text="  SYSTEM CONTROL CENTER",bg=BG,fg=FG,font=("DejaVu Sans",11)).pack(side="left",pady=(8,0))
+        tk.Label(head,text="SAFE MODE • INVENTORY ONLY",bg=BG,fg=ACCENT).pack(side="right",pady=8)
+        tk.Frame(self,bg="#243747",height=1).pack(fill="x",padx=24)
+        body=tk.Frame(self,bg=BG,padx=24,pady=20); body.pack(fill="both",expand=True)
+        nav=tk.Frame(body,bg=PANEL,width=195,padx=14,pady=16); nav.pack(side="left",fill="y"); nav.pack_propagate(False)
+        tk.Label(nav,text="WORKSPACE",bg=PANEL,fg=MUTED).pack(anchor="w",pady=(0,12))
+        for title,page in [("Overview","home"),("Disks & partitions","disks"),("Operating systems","systems"),("ISO library","isos")]:
+            tk.Button(nav,text=title,anchor="w",command=lambda p=page:self.page(p),bg=PANEL,fg=FG,activebackground="#203847",activeforeground=ACCENT,relief="flat",padx=8,pady=10).pack(fill="x",pady=2)
+        tk.Label(nav,text="YOUR MACHINE.\nYOUR CHOICE.",bg=PANEL,fg=ACCENT,justify="left",font=("DejaVu Sans",10,"bold")).pack(side="bottom",anchor="w")
+        self.main=tk.Frame(body,bg=BG,padx=22); self.main.pack(side="left",fill="both",expand=True)
+        tk.Label(self,text="No partitioning • No formatting • No bootloader changes • No OS files changed",bg="#101823",fg=MUTED,anchor="w",padx=24,pady=10).pack(fill="x",side="bottom")
+        self.page("home")
+
+    def clear(self):
+        for w in self.main.winfo_children(): w.destroy()
+    def heading(self,title,sub):
+        tk.Label(self.main,text=title,bg=BG,fg=FG,font=("DejaVu Sans",20,"bold")).pack(anchor="w")
+        tk.Label(self.main,text=sub,bg=BG,fg=MUTED,wraplength=700,justify="left").pack(anchor="w",pady=(5,16))
+    def panel(self,title,body):
+        f=tk.Frame(self.main,bg=PANEL,padx=16,pady=14); f.pack(fill="x",pady=6)
+        tk.Label(f,text=title,bg=PANEL,fg=ACCENT,font=("DejaVu Sans",11,"bold")).pack(anchor="w")
+        tk.Label(f,text=body,bg=PANEL,fg=FG,wraplength=700,justify="left").pack(anchor="w",pady=(7,0))
+    def button(self,parent,label,fn):
+        tk.Button(parent,text=label,command=fn,bg="#1e3442",fg=ACCENT,activebackground="#2a4a59",relief="flat",padx=12,pady=8).pack(side="left",padx=(0,8),pady=10)
+    def page(self,which):
+        self.clear()
+        if which=="home":
+            disks=query(["lsblk","-dn","-o","NAME,TYPE,SIZE,MODEL"]).splitlines()
+            n=sum(1 for x in disks if len(x.split())>1 and x.split()[1]=="disk")
+            self.heading("Welcome to Hybrid OS","A clean control layer for discovering systems and preparing a future multi-OS setup.")
+            self.panel("STORAGE",f"{n} disk device(s) detected using read-only queries.")
+            self.panel("OS REGISTRY",f"{len(self.items)} local inventory item(s). Registration does not prove bootability.")
+            self.panel("BOOT MANAGER","Not active in this build. This app does not modify GRUB, EFI variables, partitions or boot order.")
+            row=tk.Frame(self.main,bg=BG); row.pack(anchor="w")
+            self.button(row,"Refresh",lambda:self.page("home")); self.button(row,"View disks",lambda:self.page("disks"))
+        elif which=="disks":
+            self.heading("Disks & partitions","Read-only output from lsblk. No devices are mounted or changed.")
+            t=tk.Text(self.main,bg=PANEL,fg=FG,insertbackground=FG,relief="flat",wrap="none",font=("DejaVu Sans Mono",10))
+            t.pack(fill="both",expand=True); t.insert("1.0",query(["lsblk","-o","NAME,TYPE,SIZE,FSTYPE,LABEL,UUID,MOUNTPOINTS,MODEL,RO"]) or "Disk inventory unavailable.")
+            t.configure(state="disabled"); row=tk.Frame(self.main,bg=BG); row.pack(anchor="w"); self.button(row,"Rescan",lambda:self.page("disks"))
+        elif which=="systems":
+            self.heading("Operating systems","Registry only — not a boot menu. Add known systems and remove entries without deleting OS files.")
+            found=query(["os-prober"])
+            self.panel("DISCOVERY",found or "No confirmed os-prober results. This does not prove that no other OS exists.")
+            tree=ttk.Treeview(self.main,columns=("type","identifier","notes"),show="headings",height=8)
+            for col,label,width in [("type","TYPE",110),("identifier","IDENTIFIER",230),("notes","NOTES",260)]:
+                tree.heading(col,text=label); tree.column(col,width=width,anchor="w")
+            tree.pack(fill="both",expand=True,pady=8)
+            for e in self.items: tree.insert("","end",iid=e["id"],values=(e["type"],e["identifier"],e.get("notes","")))
+            row=tk.Frame(self.main,bg=BG); row.pack(anchor="w")
+            self.button(row,"Register item",self.add_item); self.button(row,"Remove selected",lambda:self.remove(tree))
+        else:
+            self.heading("ISO library","Register ISO paths for inventory. This does not install, mount or boot an ISO.")
+            isos=[e for e in self.items if e.get("type")=="ISO"]
+            if not isos: self.panel("NO ISO FILES REGISTERED","Choose Add ISO to record a local image path. Support varies by OS and firmware.")
+            for e in isos: self.panel(e["name"],e["identifier"]+"\n"+e.get("notes",""))
+            row=tk.Frame(self.main,bg=BG); row.pack(anchor="w"); self.button(row,"Add ISO",self.add_iso); self.button(row,"Refresh",lambda:self.page("isos"))
+    def add_item(self):
+        win=tk.Toplevel(self); win.title("Register inventory item"); win.configure(bg=BG)
+        fields={}
+        for i,(label,key,default) in enumerate([("Name","name",""),("Type","type","Installed OS"),("Identifier (UUID/path)","identifier",""),("Notes","notes","Bootability unverified")]):
+            tk.Label(win,text=label,bg=BG,fg=FG).grid(row=i,column=0,sticky="w",padx=12,pady=7)
+            e=tk.Entry(win,width=42,bg=PANEL,fg=FG,insertbackground=FG,relief="flat"); e.insert(0,default); e.grid(row=i,column=1,padx=12,pady=7); fields[key]=e
+        def commit():
+            name=fields["name"].get().strip(); ident=fields["identifier"].get().strip()
+            if not name or not ident: messagebox.showerror("Missing information","Name and identifier are required.",parent=win); return
+            if any(x["name"].casefold()==name.casefold() for x in self.items): messagebox.showerror("Duplicate","Choose a unique name.",parent=win); return
+            self.items.append({"id":os.urandom(8).hex(),"name":name,"type":fields["type"].get().strip() or "Installed OS","identifier":ident,"notes":fields["notes"].get().strip()})
+            try: save(self.items)
+            except OSError as ex: messagebox.showerror("Save failed",str(ex),parent=win); return
+            win.destroy(); self.page("systems")
+        tk.Button(win,text="Save inventory item",command=commit,bg="#1e3442",fg=ACCENT,relief="flat",padx=12,pady=8).grid(row=4,column=1,sticky="e",padx=12,pady=12)
+    def add_iso(self):
+        path=filedialog.askopenfilename(title="Select ISO",filetypes=[("ISO images","*.iso"),("All files","*.*")])
+        if not path: return
+        p=Path(path)
+        if not p.is_file(): messagebox.showerror("Invalid file","Select an existing file."); return
+        if any(x["identifier"]==str(p) for x in self.items): messagebox.showinfo("Already registered","This ISO is already listed."); return
+        self.items.append({"id":os.urandom(8).hex(),"name":p.stem[:80],"type":"ISO","identifier":str(p),"notes":"Inventory only; install/boot support not implemented"})
+        try: save(self.items)
+        except OSError as ex: messagebox.showerror("Save failed",str(ex)); return
+        self.page("isos")
+    def remove(self,tree):
+        sel=tree.selection()
+        if not sel: messagebox.showinfo("Select an item","Choose a registry row first."); return
+        e=next((x for x in self.items if x["id"]==sel[0]),None)
+        if not e or not messagebox.askyesno("Remove registry entry",f"Remove '{e['name']}' from the registry only?\nNo OS, ISO or partition files will be deleted."): return
+        self.items=[x for x in self.items if x["id"]!=e["id"]]
+        try: save(self.items)
+        except OSError as ex: messagebox.showerror("Save failed",str(ex)); return
+        self.page("systems")
+
+if __name__=="__main__": Center().mainloop()
