@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Hybrid OS Control Center
+Comment=Safely inspect disks and manage local OS inventory
+Exec=/usr/local/bin/hybrid-control-center
+Icon=computer
+Terminal=false
+Categories=System;Settings;
