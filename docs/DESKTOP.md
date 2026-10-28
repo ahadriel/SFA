@@ -21,7 +21,7 @@ GitHub Actions workflow **Build Hybrid Desktop ISO** builds the desktop image. R
 
 ## Included capabilities
 
-XFCE desktop, file manager, terminal, settings, Firefox ESR, NetworkManager, development tools, Python, Git, filesystem utilities, Wine and Winetricks.
+XFCE desktop, file manager, terminal, settings, Firefox ESR, NetworkManager, development tools, Python, Git, filesystem utilities, Wine and Winetricks. The **Hybrid OS Control Center** provides a graphical, read-only disk/partition inventory, local OS registry, and ISO-path inventory. It does not install systems or modify boot configuration.
 
 Wine can run **some** Windows applications, not all. EXE/MSI compatibility varies by app, architecture, required drivers, DRM, and other dependencies. This is not Windows and does not promise universal Windows application support.
 
