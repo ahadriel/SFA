@@ -9,9 +9,11 @@ for path in config/package-lists/hybrid-desktop.list.chroot config/includes.chro
 done
 
 # Separate from the small freestanding kernel ISO: this is the practical desktop build.
+# Pin the parent distro to avoid inheriting Ubuntu-specific keyring defaults from CI.
 sudo lb config \
   --ignore-system-defaults \
   --distribution bookworm \
+  --parent-distribution bookworm \
   --architectures amd64 \
   --binary-images iso-hybrid \
   --bootloader grub \
