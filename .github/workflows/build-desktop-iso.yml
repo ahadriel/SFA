@@ -32,6 +32,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y live-build debootstrap xorriso squashfs-tools mtools dosfstools
 
+      - name: Validate desktop manager Python syntax
+        run: python3 -m py_compile config/includes.chroot/usr/local/bin/hybrid-control-center
+
       - name: Build Hybrid Desktop
         run: sudo bash scripts/build-desktop-iso.sh
 
