@@ -2,3 +2,4 @@
 set -eu
 chmod 0755 /usr/local/sbin/hybrid
 chmod 0644 /etc/profile.d/hybrid-login.sh
+chmod 0755 /usr/local/bin/hybrid-control-center
