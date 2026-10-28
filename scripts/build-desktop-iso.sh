@@ -12,9 +12,6 @@ done
 sudo lb config \
   --ignore-system-defaults \
   --distribution bookworm \
-  --parent-distribution bookworm \
-  --parent-distribution-chroot bookworm \
-  --parent-distribution-binary bookworm \
   --architectures amd64 \
   --binary-images iso-hybrid \
   --bootloader grub \
